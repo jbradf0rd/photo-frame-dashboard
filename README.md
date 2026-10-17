@@ -1,5 +1,7 @@
 # About this fork
 
+![The Today page of the family dashboard on the AiMOR frame](family-frame/docs/screenshots/today.png)
+
 This fork adds a Muslim family dashboard to Wes Bos's photo-frame project and records how we
 set up one AiMOR frame without an SD card. Our work is in the [`family-frame/`](family-frame/)
 folder. Everything below the line is Wes's original README, unchanged.
