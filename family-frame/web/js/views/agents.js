@@ -1,126 +1,155 @@
-// Agents: AI plan usage at a glance (inspired by CodexBar). Display only.
+// Agents: Hermes status report, pushed every 5 minutes by frame_agents_push.py on the mini.
+// Five cards: scheduled jobs, Hermes usage, fleet, long jobs, power. Zoho work is on the Work tab.
+// Counts only: no client names, task titles, mail subjects or job names reach this page.
 (function () {
   'use strict';
-  var D = window.DATA;
-  var V = { el: null, loaded: Date.now(), synced: Date.now() - 2 * 60000 };
+  var V = { el: null, rep: null, fetched: 0, err: null };
+  var COLORS = {
+    jobs: ['#2D5BFF', '45 91 255'], usage: ['#7A3FD1', '122 63 209'], fleet: ['#00A36C', '0 163 108'],
+    long: ['#E4007C', '228 0 124'], power: ['#FFB000', '255 176 0']
+  };
 
-  function pstyle(a) { return '--c:' + a.color + ';--c-rgb:' + a.rgb; }
-  function minsLeft(m) { return Math.max(0, m.left - (Date.now() - V.loaded) / 60000); }
-  function fmtLeft(min) {
-    min = Math.round(min);
-    if (min < 60) return min + 'm';
-    if (min < 1440) return Math.floor(min / 60) + 'h ' + (min % 60) + 'm';
-    return Math.floor(min / 1440) + 'd ' + Math.floor((min % 1440) / 60) + 'h';
+  function esc(s) { return App.esc(String(s == null ? '' : s)); }
+  function pst(k) { return '--c:' + COLORS[k][0] + ';--c-rgb:' + COLORS[k][1]; }
+  function ago(isoStr) {
+    if (!isoStr) return 'never';
+    var m = Math.round((Date.now() - new Date(isoStr).getTime()) / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + ' min ago';
+    if (m < 1440) return Math.floor(m / 60) + ' hr ago';
+    return Math.floor(m / 1440) + ' days ago';
   }
-  function fmtTokens(m) { return m >= 10 ? Math.round(m) + 'M' : m.toFixed(1) + 'M'; }
-
-  function meter(m, ai, mi) {
-    var left = minsLeft(m);
-    var pace = Math.round((1 - left / m.win) * 100); // where even usage would be right now
-    var diff = m.used - pace;
-    var hot = m.used >= 85;
-    var paceText = Math.abs(diff) < 3 ? 'On pace' : diff > 0 ? diff + '% over pace' : -diff + '% under pace';
-    return '<div class="ag-meter' + (hot ? ' is-hot' : '') + '">' +
-      '<div class="ag-meter-top"><span class="ag-label">' + m.label + '</span>' +
-      '<span class="ag-pct num">' + m.used + '<small>%</small></span></div>' +
-      '<div class="ag-bar"><i style="width:' + m.used + '%"></i><em data-pace-mark style="left:' + pace + '%" title="Even pace"></em></div>' +
-      '<div class="ag-meter-foot" data-meter="' + ai + ',' + mi + '"><span>' + (m.detail ? m.detail + ' · ' : '') + 'Resets in <b data-reset>' + fmtLeft(left) + '</b></span>' +
-      '<span class="ag-pace' + (diff >= 3 ? ' is-over' : '') + '" data-pace>' + paceText + '</span></div>' +
-      '</div>';
+  function until(isoStr) {
+    if (!isoStr) return '–';
+    var m = Math.round((new Date(isoStr).getTime() - Date.now()) / 60000);
+    if (m <= 0) return 'now';
+    return m < 60 ? 'in ' + m + ' min' : 'in ' + Math.floor(m / 60) + ' hr ' + (m % 60) + ' min';
   }
-
-  function spark(vals) {
-    var w = 112, h = 34, max = Math.max.apply(null, vals);
-    var pts = vals.map(function (v, i) { return (i / (vals.length - 1) * w).toFixed(1) + ',' + (h - 3 - v / max * (h - 6)).toFixed(1); });
-    var last = pts[pts.length - 1].split(',');
-    return '<svg class="ag-spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
-      '<polyline points="' + pts.join(' ') + '"/><circle cx="' + last[0] + '" cy="' + last[1] + '" r="3.5"/></svg>';
+  function big(n) {
+    if (n == null) return '–';
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e8 ? 0 : 1) + 'M';
+    if (n >= 1e3) return Math.round(n / 1e3) + 'K';
+    return String(n);
   }
-
-  function card(a) {
-    var hot = a.meters.some(function (m) { return m.used >= 85; });
-    var status = a.status === 'ok'
-      ? '<span class="ag-status"><i></i>Operational</span>'
-      : '<span class="ag-status is-warn"><i></i>Degraded</span>';
-    return '<section class="ag-card" style="' + pstyle(a) + '">' +
-      '<header class="ag-head"><div class="ag-id"><i class="ag-swatch"></i><b>' + a.name + '</b><span class="ag-plan">' + a.plan + '</span></div>' + status + '</header>' +
-      (a.incident ? '<div class="ag-incident">' + App.icon('bolt', 16) + a.incident + '</div>' : hot ? '<div class="ag-incident ag-incident--hot">' + App.icon('clock', 16) + 'Near the session limit</div>' : '') +
-      a.meters.map(function (m, mi) { return meter(m, D.agents.indexOf(a), mi); }).join('') +
-      '<footer class="ag-foot"><div><span class="num">' + fmtTokens(a.tokens) + '</span><small>tokens today</small></div>' +
-      '<div><span class="num">' + (a.cost ? '$' + a.cost.toFixed(2) : 'Incl.') + '</span><small>' + (a.cost ? 'API cost' : 'in plan') + '</small></div>' +
-      spark(a.week) + '</footer>' +
-      '</section>';
+  function money(n) { return n == null ? '–' : '$' + (n >= 100 ? Math.round(n) : n.toFixed(2)); }
+  function status(ok, text) {
+    return '<span class="ag-status' + (ok ? '' : ' is-warn') + '"><i></i>' + esc(text) + '</span>';
+  }
+  function head(k, title, sub, stat) {
+    return '<header class="ag-head"><div class="ag-id"><i class="ag-swatch"></i><b>' + esc(title) + '</b>' +
+      (sub ? '<span class="ag-plan">' + esc(sub) + '</span>' : '') + '</div>' + (stat || '') + '</header>';
+  }
+  function stat(n, label, warn) {
+    return '<div class="ag-stat' + (warn ? ' is-warn' : '') + '"><span class="num">' + n + '</span><small>' + esc(label) + '</small></div>';
+  }
+  function shell(k, inner) { return '<section class="ag-card ag-card--' + k + '" style="' + pst(k) + '">' + inner + '</section>'; }
+  function broken(k, title, c) {
+    return shell(k, head(k, title, '', status(false, 'No data')) +
+      '<div class="ag-empty">' + esc(c && c.error ? 'Could not read this: ' + c.error : 'Waiting for the first report') + '</div>');
   }
 
-  function summary() {
-    var now = App.now();
-    var totals = [0, 1, 2, 3, 4, 5, 6].map(function (i) {
-      return D.agents.reduce(function (s, a) { return s + a.week[i]; }, 0);
-    });
-    var max = Math.max.apply(null, totals);
-    var week = totals.reduce(function (s, v) { return s + v; }, 0);
-    var cost = D.agents.reduce(function (s, a) { return s + a.cost; }, 0);
-    var bars = totals.map(function (t, i) {
-      var d = App.addDays(now, i - 6);
-      return '<div class="ag-col' + (i === 6 ? ' is-today' : '') + '"><div class="ag-stack" style="height:' + (t / max * 100) + '%">' +
-        D.agents.map(function (a) { return '<i style="' + pstyle(a) + ';flex-grow:' + a.week[i] + '"></i>'; }).join('') +
-        '</div><span>' + (i === 6 ? 'Today' : App.fmt.dayShort(d)) + '</span></div>';
+  // 1. Scheduled jobs
+  function jobs(c) {
+    if (!c || !c.ok) return broken('jobs', 'Jobs', c);
+    var d = c.data, ok = d.failing === 0;
+    return shell('jobs', head('jobs', 'Jobs', '', status(ok, ok ? 'All passing' : d.failing + ' failing')) +
+      '<div class="ag-stats">' + stat(d.passing, 'passing') + stat(d.failing, 'failing', d.failing > 0) + stat(d.paused, 'paused') + '</div>' +
+      (ok ? '' : '<div class="ag-incident ag-incident--hot">' + App.icon('bolt', 16) + 'Last failure ' + esc(ago(d.lastFailure)) + '. Ask Hermes which job.</div>') +
+      '<footer class="ag-foot"><div><span class="num">' + esc(until(d.nextRun)) + '</span><small>next run</small></div>' +
+      '<div><span class="num">' + esc(ago(d.lastRun)) + '</span><small>last run</small></div></footer>');
+  }
+
+  // 2. Hermes usage
+  function usage(c) {
+    if (!c || !c.ok) return broken('usage', 'Hermes', c);
+    var d = c.data, max = Math.max.apply(null, d.week.map(function (x) { return x.cost; }).concat([0.01]));
+    var bars = d.week.map(function (x, i) {
+      var day = new Date(x.date + 'T12:00:00');
+      return '<div class="ag-col' + (i === 6 ? ' is-today' : '') + '"><b class="ag-colval">' + (x.cost >= 1 ? '$' + Math.round(x.cost) : '') + '</b>' +
+        '<div class="ag-stack" style="height:' + Math.max(4, x.cost / max * 100) + '%"><i></i></div>' +
+        '<span>' + (i === 6 ? 'Today' : App.fmt.dayShort(day)) + '</span></div>';
     }).join('');
-    return '<section class="ag-card ag-sum">' +
-      '<header class="ag-head"><div class="ag-id"><b>All agents</b><span class="ag-plan">Last 7 days</span></div></header>' +
-      '<div class="ag-sum-stats"><div><span class="num">' + fmtTokens(week) + '</span><small>tokens</small></div>' +
-      '<div><span class="num">$' + cost.toFixed(0) + '</span><small>API cost today</small></div></div>' +
-      '<div class="ag-chart">' + bars + '</div>' +
-      '<div class="ag-legend">' + D.agents.map(function (a) { return '<span style="' + pstyle(a) + '"><i></i>' + a.name + '</span>'; }).join('') + '</div>' +
-      '</section>';
+    var src = Object.keys(d.sources || {}).map(function (k) { return esc(k) + ' ' + d.sources[k]; }).join(' · ');
+    return shell('usage', head('usage', 'Hermes', 'Usage today', '') +
+      '<div class="ag-stats">' + stat(money(d.today.cost), 'cost today') + stat(big(d.today.tokens), 'tokens') + stat(d.today.sessions, 'sessions') + '</div>' +
+      '<div class="ag-sub">' + (src || 'No sessions yet today') + '</div>' +
+      '<div class="ag-chart ag-chart--light">' + bars + '</div>' +
+      '<div class="ag-sub">Last 7 days: ' + money(d.weekCost) + ' · ' + big(d.weekTokens) + ' tokens</div>');
   }
 
-  function paceOf(m) {
-    var left = minsLeft(m), pace = Math.round((1 - left / m.win) * 100), diff = m.used - pace;
-    return { left: left, pace: pace, diff: diff, text: Math.abs(diff) < 3 ? 'On pace' : diff > 0 ? diff + '% over pace' : -diff + '% under pace' };
-  }
-  // Minute tick: update countdown + pace text in place (no rebuild, so switching here stays instant).
-  function tick() {
-    if (!V.el || !V.el.firstChild) return;
-    App.$$('[data-meter]', V.el).forEach(function (foot) {
-      var ix = foot.dataset.meter.split(','), m = D.agents[+ix[0]].meters[+ix[1]], p = paceOf(m);
-      foot.querySelector('[data-reset]').textContent = fmtLeft(p.left);
-      var pe = foot.querySelector('[data-pace]');
-      pe.textContent = p.text;
-      pe.classList.toggle('is-over', p.diff >= 3);
-      foot.parentNode.querySelector('[data-pace-mark]').style.left = p.pace + '%';
-    });
-    var sync = V.el.querySelector('.ag-sync .label');
-    if (sync) sync.textContent = synced();
+  // 3. Fleet
+  function fleet(c) {
+    if (!c || !c.ok) return broken('fleet', 'Fleet', c);
+    var d = c.data, ok = d.online === d.total && d.warn === 0;
+    function pct(v, hi) { return v == null ? '<td>–</td>' : '<td class="' + (v >= hi ? 'is-warn' : '') + '">' + Math.round(v) + '%</td>'; }
+    var rows = d.hosts.map(function (h) {
+      return '<tr class="' + (h.online ? '' : 'is-down') + '"><th><i class="ag-dot ag-dot--' + (h.online ? (h.overall === 'ok' ? 'ok' : 'warn') : 'down') + '"></i>' + esc(h.name) + '</th>' +
+        (h.online ? pct(h.cpu, 90) + pct(h.ram, 85) + pct(h.disk, 85) + '<td>' + (h.temp == null ? '–' : Math.round(h.temp * 9 / 5 + 32) + '°') + '</td>' : '<td colspan="4">offline</td>') + '</tr>';
+    }).join('');
+    return shell('fleet', head('fleet', 'Fleet', d.online + ' of ' + d.total + ' online', status(ok, ok ? 'Healthy' : 'Check')) +
+      '<table class="ag-table"><thead><tr><th></th><td>CPU</td><td>RAM</td><td>Disk</td><td>CPU °F</td></tr></thead><tbody>' + rows + '</tbody></table>');
   }
 
-  function synced() {
-    var m = Math.round((Date.now() - V.synced) / 60000);
-    return m < 1 ? 'Updated just now' : 'Updated ' + m + ' min ago';
+  // 4. Long jobs
+  function longJobs(c) {
+    if (!c || !c.ok) return broken('long', 'Long jobs', c);
+    var d = c.data;
+    var bars = d.jobs.map(function (j) {
+      var p = j.total ? Math.min(100, Math.round(j.done / j.total * 100)) : 0;
+      return '<div class="ag-meter"><div class="ag-meter-top"><span class="ag-label">' + esc(j.name) + '</span><span class="ag-pct num">' + p + '<small>%</small></span></div>' +
+        '<div class="ag-bar"><i style="width:' + p + '%"></i></div>' +
+        '<div class="ag-meter-foot"><span><b>' + big(j.done) + '</b> of ' + big(j.total) + ' ' + esc(j.unit) + '</span><span>' +
+        (j.eta ? 'done ' + esc(until(j.eta)) : 'updated ' + esc(ago(j.updated))) + '</span></div></div>';
+    }).join('');
+    var procs = d.processes.length
+      ? '<div class="ag-sub">Background: ' + d.processes.map(function (p) { return esc(p.label) + ' (since ' + esc(ago(p.since)) + ')'; }).join(', ') + '</div>' : '';
+    return shell('long', head('long', 'Long jobs', d.jobs.length ? d.jobs.length + ' running' : '', '') +
+      (bars || '<div class="ag-empty">No long jobs are reporting progress.</div>') + procs);
+  }
+
+  // 5. Power
+  function power(c) {
+    if (!c || !c.ok) return broken('power', 'Power', c);
+    var d = c.data, max = Math.max.apply(null, d.hosts.map(function (h) { return h.d30; }).concat([0.01]));
+    var rows = d.hosts.filter(function (h) { return h.d30 > 0 || h.watts; }).map(function (h) {
+      return '<div class="ag-prow"><span>' + esc(h.name) + '</span><div class="ag-bar"><i style="width:' + Math.round(h.d30 / max * 100) + '%"></i></div><b class="num">' + money(h.d30) + '</b></div>';
+    }).join('');
+    return shell('power', head('power', 'Power', 'GPU only', '') +
+      '<div class="ag-stats">' + stat(money(d.total.today), 'today') + stat(money(d.total.d7), '7 days') + stat(money(d.total.d30), '30 days') + '</div>' +
+      (rows || '<div class="ag-empty">No GPU power measured yet.</div>') +
+      '<div class="ag-sub">Measures GPU power only' + (d.pricePerKwh ? ', at $' + d.pricePerKwh.toFixed(3) + ' per kWh' : '') + '.</div>');
   }
 
   function render() {
+    if (!V.el) return;
+    var r = V.rep || {};
+    var stale = !r.at || (Date.now() - new Date(r.at).getTime()) > 20 * 60000;
     V.el.innerHTML = '<div class="agents">' +
-      '<header class="ag-top"><div><div class="label">AI plans · usage limits</div><h1 class="serif">Agents</h1></div>' +
-      '<div class="ag-sync"><span class="label">' + synced() + '</span>' +
+      '<header class="ag-top"><div><div class="label">Hermes · AI agents and fleet</div><h1 class="serif">Agents</h1></div>' +
+      '<div class="ag-sync"><span class="label' + (stale ? ' is-stale' : '') + '">' + (r.at ? 'Report ' + esc(ago(r.at)) : 'No report yet') + '</span>' +
       '<button class="icon-btn" data-refresh aria-label="Refresh">' + App.icon('undo', 26) + '</button></div></header>' +
-      '<div class="ag-grid">' + D.agents.map(card).join('') + summary() + '</div>' +
+      '<div class="ag-grid">' + jobs(r.jobs) + usage(r.usage) + fleet(r.fleet) + longJobs(r.long) + power(r.power) + '</div>' +
       '</div>';
+  }
+
+  function load() {
+    return App.api('GET', '/api/agents').then(function (rep) { V.rep = rep; V.fetched = Date.now(); render(); })
+      .catch(function () { render(); });
   }
 
   App.register('agents', {
     show: function (el) {
       if (!V.el) {
         V.el = el;
-        el.addEventListener('click', function (e) {
-          var b = e.target.closest('[data-refresh]');
-          if (!b) return;
-          V.synced = Date.now();
-          render();
-        });
+        el.addEventListener('click', function (e) { if (e.target.closest('[data-refresh]')) load(); });
       }
       render();
+      load();
     }
   });
-  App.on('minute', tick);
+  App.on('minute', function () {
+    if (!V.el || !V.el.offsetParent) return;
+    if (Date.now() - V.fetched > 60000) load(); else render();
+  });
 })();

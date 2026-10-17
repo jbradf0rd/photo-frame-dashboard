@@ -66,3 +66,36 @@
 .ag-legend span { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: rgba(255, 255, 255, .8); }
 .ag-legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
 .ag-legend span[style*="#111111"] i { background: #F2EEE6; }
+
+/* Hermes report cards (2026-10-17) */
+.ag-stats { display: flex; gap: 22px; }
+.ag-stat { display: flex; flex-direction: column; min-width: 0; }
+.ag-stat .num { font-size: 40px; line-height: .85; }
+.ag-stat small { font-size: 12px; font-weight: 700; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; white-space: nowrap; }
+.ag-stat.is-warn .num { color: var(--alert); }
+.ag-sub { font-size: 14px; font-weight: 600; color: var(--mute); }
+.ag-empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 17px; color: var(--mute); font-style: italic; }
+.ag-label + .ag-stats { margin-top: -4px; }
+.ag-table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.ag-table th { text-align: left; font-weight: 800; white-space: nowrap; }
+.ag-table td { text-align: right; font-variant-numeric: tabular-nums; padding: 3px 0 3px 8px; }
+.ag-table thead td { font-size: 11px; font-weight: 800; color: var(--mute); letter-spacing: .06em; text-transform: uppercase; }
+.ag-table tbody tr + tr th, .ag-table tbody tr + tr td { border-top: 1px solid var(--line); }
+.ag-table td.is-warn { color: var(--alert); font-weight: 800; }
+.ag-table tr.is-down th, .ag-table tr.is-down td { color: var(--alert); }
+.ag-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
+.ag-dot--ok { background: var(--ok); }
+.ag-dot--warn { background: #E08A00; }
+.ag-dot--down { background: var(--alert); }
+.ag-prow { white-space: nowrap; display: grid; grid-template-columns: 110px 1fr 62px; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; }
+.ag-prow .ag-bar { height: 10px; }
+.ag-prow b { text-align: right; font-size: 18px; }
+.ag-chart--light .ag-col span { color: var(--mute); }
+.ag-chart--light .ag-col.is-today span { color: var(--ink); }
+.ag-chart--light .ag-stack i { background: var(--c); flex: 1; }
+.ag-colval { font-size: 11px; font-weight: 800; text-align: center; color: var(--mute); }
+.ag-sync .label.is-stale { color: var(--alert); }
+
+.ag-card--fleet { grid-column: 3; grid-row: 1 / span 2; }
+.ag-card--fleet .ag-table { font-size: 20px; }
+.ag-card--fleet .ag-table td, .ag-card--fleet .ag-table th { padding-top: 9px; padding-bottom: 9px; }

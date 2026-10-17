@@ -64,6 +64,51 @@ talk to it on Telegram. Hermes can send to the frame in two ways:
 The two scripts do not need Hermes. Any program that can run a command, or send an HTTP POST
 with the token, can send alerts and messages the same way.
 
+## Agents and Work tabs
+
+Two tabs report on the AI agents, the computers at home, and open work. A script on the
+computer that runs Hermes, `server/frame_agents_push.py`, collects a report every 5 minutes
+and posts it to the frame server. Both tabs show counts only. No client names, task titles,
+mail subjects or job names reach the frame.
+
+| Agents | Work |
+|---|---|
+| ![Agents tab](docs/screenshots/agents.png) | ![Work tab](docs/screenshots/work.png) |
+
+The screenshots use sample data from `scripts/sample-agents-report.py`.
+
+The Agents tab has five cards:
+
+1. Jobs: how many Hermes scheduled jobs pass, fail or are paused, and when the next one runs.
+2. Hermes: cost, tokens and sessions today, where the sessions came from, and the last 7 days.
+3. Fleet: each computer from [homelab-monitor](https://hub.docker.com/r/sikamikaniko123/homelab-monitor),
+   with CPU, RAM, disk and CPU temperature in °F.
+4. Long jobs: a progress bar for any job that writes a progress file (see below), and the
+   Hermes background processes.
+5. Power: measured power cost per computer. The monitor measures GPU power only.
+
+The Work tab shows open Zoho Projects tasks for up to two people (overdue, due this week, in
+progress, no due date, on hold), the number of mail drafts from the last 30 days, and the
+number of projects with open tasks.
+
+Settings go in the environment or in the Hermes `.env` file:
+
+| Setting | Example | Purpose |
+|---|---|---|
+| `FRAME_HOMELAB_MCP` | `https://nas.example.ts.net:9810/mcp` | homelab-monitor MCP address |
+| `FRAME_HOST_LABELS` | `local=NAS,desktop=mini` | rename computers |
+| `FRAME_SAFE_CWD` | `c:\projects` | folders whose name may show for a background process |
+| `FRAME_ZOHO_SNAPSHOT` | `C:\state\zoho-tasks.json` | nightly list of Zoho tasks |
+| `FRAME_WORK_PEOPLE` | `Sam=Sam;Alex=Assistant` | Zoho owner name and card label |
+| `FRAME_DRAFTS_LABEL` | `mail drafts, last 30 days` | label for the drafts count |
+| `GOOGLE_TOKEN_FILE` | `google_token.json` | Gmail token for the drafts count |
+
+A long job gets a progress bar when it writes a file such as the example below to `hermes/state/frame-progress/<id>.json`.
+
+```json
+{"name": "Book translation", "done": 4120, "total": 12000, "unit": "pages", "eta": "2026-10-20T18:00:00-05:00"}
+```
+
 ## Layout
 
 ```

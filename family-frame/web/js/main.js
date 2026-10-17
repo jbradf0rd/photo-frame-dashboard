@@ -13,5 +13,6 @@ import './views/shopping.js';
 import './views/salah.js';
 import './views/control.js';
 import './views/agents.js';
+import './views/work.js';
 import './views/ambient.js';
 import './diag.js';

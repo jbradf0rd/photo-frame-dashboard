@@ -1,0 +1,18 @@
+/* Work: Zoho task counts (uses the .ag-* card styles from agents.css) */
+.wk-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr 0.8fr; gap: 14px; }
+.wk-hero { display: flex; align-items: baseline; gap: 12px; }
+.wk-hero .num { font-size: 120px; line-height: .8; }
+.wk-hero small { font-size: 18px; font-weight: 800; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; }
+.wk-split { display: flex; gap: 3px; height: 18px; border-radius: 9px; overflow: hidden; background: rgb(var(--c-rgb) / .12); }
+.wk-split i { display: block; min-width: 6px; }
+.wk-split .is-over { background: var(--alert); }
+.wk-split .is-week { background: #E08A00; }
+.wk-split .is-rest { background: var(--c); }
+.wk-split .is-hold { background: rgb(var(--c-rgb) / .3); }
+.wk-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 14px; margin-top: auto; }
+.wk-stats--col { grid-template-columns: 1fr; margin-top: 4px; }
+.wk-stat { display: flex; flex-direction: column; }
+.wk-stat .num { font-size: 46px; line-height: .85; }
+.wk-stat small { font-size: 12px; font-weight: 700; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-top: 5px; }
+.wk-stat.is-warn .num { color: var(--alert); }
+.wk-side .ag-sub { margin-top: auto; }

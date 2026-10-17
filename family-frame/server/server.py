@@ -10,6 +10,8 @@ Stdlib only. Runs in Docker on a home server. LAN only.
   POST /api/message {"text": ...}  add a message-board line (needs X-Frame-Token)
   POST /api/message/clear          clear the message board (needs X-Frame-Token)
   GET  /api/weather                Open-Meteo forecast for the house, cached 20 minutes
+  GET  /api/agents                 Hermes status report for the Agents and Work tabs (pushed by frame_agents_push.py)
+  POST /api/agents/push            replace that report (needs X-Frame-Token)
   GET  /api/calendar               events from the private ICS links in CALENDAR_ICS (cached 10 minutes)
 """
 import json
@@ -254,7 +256,12 @@ class Handler(SimpleHTTPRequestHandler):
                 with LOCK:
                     st = load_state()
                 st.pop("calendarPush", None)
+                st.pop("agentsPush", None)
                 return self._json(st)
+            if p == "/api/agents":
+                with LOCK:
+                    rep = load_state().get("agentsPush")
+                return self._json(rep or {"at": None})
             if p == "/api/weather":
                 return self._json(get_weather())
             if p == "/api/prayer":
@@ -316,6 +323,14 @@ class Handler(SimpleHTTPRequestHandler):
                 state["calendarPush"] = {"at": now_iso(), "events": evs[:1500]}
                 save_state(state)
                 return self._json({"ok": True, "count": len(evs)})
+            elif p == "/api/agents/push":
+                if not self._authed():
+                    return self._json({"error": "token"}, 401)
+                if not isinstance(body, dict) or "at" not in body:
+                    return self._json({"error": "report must be an object with at"}, 400)
+                state["agentsPush"] = body
+                save_state(state)
+                return self._json({"ok": True})
             elif p == "/api/message/clear":
                 if not self._authed():
                     return self._json({"error": "token"}, 401)
