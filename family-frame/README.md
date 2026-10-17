@@ -25,6 +25,45 @@ LAN, and the server stores the shared state in one JSON file.
 - Parent panel: hold the sidebar clock for 1.5 seconds to test the Adhan, set the volume,
   or reload.
 
+## Screenshots
+
+These were taken on the frame itself with `adb exec-out screencap`, running the code in this
+fork with sample data (Dad, Mom, Child 1, Child 2, Chicago).
+
+| Today | Salah |
+|---|---|
+| ![Today page](docs/screenshots/today.png) | ![Salah page](docs/screenshots/salah.png) |
+
+| Calendar, month | Calendar, week |
+|---|---|
+| ![Calendar month view](docs/screenshots/calendar-month.png) | ![Calendar week view](docs/screenshots/calendar-week.png) |
+
+| Calendar, upcoming | Chores |
+|---|---|
+| ![Calendar upcoming view](docs/screenshots/calendar-upcoming.png) | ![Chores page](docs/screenshots/chores.png) |
+
+| Full-screen alert |
+|---|
+| ![Full-screen alert](docs/screenshots/alert.png) |
+
+## Messages from Hermes Agent
+
+We run [Hermes Agent](https://github.com/NousResearch/hermes-agent) on a computer at home and
+talk to it on Telegram. Hermes can send to the frame in two ways:
+
+1. A Telegram message to Hermes that starts with `#alert` puts the rest of the text on the
+   frame as a full-screen red alert with a chime. It stays until someone taps "Got it". A
+   message that starts with `#frame` adds a line to the message board on the Today page.
+   `#frame clear` empties the board, and `#alert off` removes the alert. Hermes runs
+   `server/frame_post.py`, which posts to the frame server with the `X-Frame-Token` header.
+   Hermes then reacts with ✅, or replies with the error if the post failed.
+2. A scheduled task runs `server/frame_calendar_push.py` every 10 minutes. It reads the
+   Google calendar through the same Google token Hermes uses, and sends the events from 45 days ago to 60 days ahead to
+   the frame. Events marked private show as "Busy".
+
+The two scripts do not need Hermes. Any program that can run a command, or send an HTTP POST
+with the token, can send alerts and messages the same way.
+
 ## Layout
 
 ```
