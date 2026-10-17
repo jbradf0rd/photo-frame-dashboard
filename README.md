@@ -121,6 +121,8 @@ with the token, can send alerts and messages the same way.
 
 ---
 
+Here is Wes's original README.
+
 # Taking over Android photo frames
 
 Turn a cheap Android photo frame into a family dashboard: unlock it, root it, replace the vendor app, and run your own web page full screen.
