@@ -6,9 +6,9 @@ folder. Everything below the line is Wes's original README, unchanged.
 
 ## The frame
 
-- Model: AiMOR PF1007L, 10.1 inch, Allwinner A33, Android 6.0.1.
-- Firmware: `YHK.F-null-A33-1001-D1024-PF1007L-321-OS-AIMOR.0.20260416`, AiMOR app 6.0.78.
-- Stock state: USB showed only mass storage (`1f3a:1000`). ADB was off.
+The frame is an AiMOR PF1007L, 10.1 inch, with an Allwinner A33 chip and Android 6.0.1.
+Its firmware is `YHK.F-null-A33-1001-D1024-PF1007L-321-OS-AIMOR.0.20260416`, with AiMOR app
+6.0.78. Out of the box its USB port showed only mass storage (`1f3a:1000`), and ADB was off.
 
 Three reports in the upstream repo cover this firmware (#16, #102, #119). Those units used an
 SD-card U-Boot route, a one-sector `build.prop` edit, or came with ADB already on. As of
