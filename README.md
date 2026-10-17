@@ -1,3 +1,74 @@
+# About this fork
+
+This fork adds a Muslim family dashboard to Wes Bos's photo-frame project and records how we
+set up one AiMOR frame without an SD card. Our work is in the [`family-frame/`](family-frame/)
+folder. Everything below the line is Wes's original README, unchanged.
+
+## The frame
+
+- Model: AiMOR PF1007L, 10.1 inch, Allwinner A33, Android 6.0.1.
+- Firmware: `YHK.F-null-A33-1001-D1024-PF1007L-321-OS-AIMOR.0.20260416`, AiMOR app 6.0.78.
+- Stock state: USB showed only mass storage (`1f3a:1000`). ADB was off.
+
+Three reports in the upstream repo cover this firmware (#16, #102, #119). Those units used an
+SD-card U-Boot route, a one-sector `build.prop` edit, or came with ADB already on. As of
+16 October 2026, the upstream firmware table did not list the no-SD-card route (T3c) for
+`20260416`. This frame is the first recorded T3c takeover on that firmware: root ADB over
+Wi-Fi, with nothing written to flash, followed by persistent USB ADB.
+
+## How we kept the frame from talking to the vendor
+
+The AiMOR app keeps an unencrypted TCP connection to the vendor server on port 7806, and that
+server can run any command on the frame as root. The vendor domain is `efercro.com`. It is
+registered through Alibaba Cloud Computing (Beijing) and uses Alibaba's DNS servers. When we
+checked on 16 October 2026, its command hosts resolved to Amazon servers in Ashburn,
+Virginia. The vendor can change that at any time, so we block the whole domain.
+
+We used the Pi-hole (the DNS server for our home network) in three ways:
+
+1. Before the frame joined Wi-Fi, a regex rule blocked every name under `efercro.com`.
+   On Wi-Fi the frame asked the Pi-hole for `imsconnect.efercro.com`,
+   `imsphotoframe.efercro.com`, a Bing address and an NTP time server.
+2. For one ten-minute window we pointed `imsconnect.efercro.com` at a computer on our own network.
+   That computer acted as the vendor server and sent the one command that turns on root ADB.
+   The rest of the vendor domain stayed blocked the whole time.
+3. We then removed that redirect and kept the block on the whole domain. During the window
+   a firewall rule on our PC accepted port 7806 only from the home network. We removed that
+   rule afterwards.
+
+A DNS block cannot stop an app that uses a hard-coded IP address. For that, also block
+outbound TCP port 7806 on your router. After the setup we turned off the vendor apps
+(`com.efercro.os.aimor`, `com.yhk.qeota`, `com.DeviceTest`), so nothing on the frame tries
+to call home. The full steps are in
+[`family-frame/docs/frame-setup.md`](family-frame/docs/frame-setup.md).
+
+## What we changed and added
+
+- A newer WebView (106) and three CA root certificates, so the frame can show a modern page.
+- Wes's Home HQ kiosk app as the start screen, pointed at our own server.
+- A Salah tab: the five prayer times, the next prayer and a countdown, with the Adhan at each
+  prayer. Fajr has its own Adhan (Makkah) and the other four use Hussain Shahat (Egyptian
+  style). Each has its own volume.
+- Prayer times from [adhan-js](https://github.com/batoulapps/adhan-js) on the frame, and from
+  `server/prayer.py`, a Python port of the same calculation, on the server. The port gave
+  the same times as adhan-js on 48 test dates across 2026 and 2027.
+- The Hijri date, from the Umm al-Qura calendar.
+- A calendar with Month, Week and Upcoming views, fed from a Google calendar or ICS links.
+  Events marked private show as "Busy".
+- A full-screen alert with a chime, and a message board, sent from any computer with
+  `server/frame_post.py`.
+- Chores, stars, Quran memorization progress and a shopping list, shared between the frame
+  and the server.
+- Weather from Open-Meteo.
+- A small Python server (standard library only, in Docker) that serves the page and stores
+  the shared state on your own network. Nothing goes to a cloud service except the weather
+  request.
+- No personal data in the repo. Names, location and keys go in `family-frame/web/js/family.js`
+  and a `.env` file. The Adhan recordings are downloaded from archive.org by
+  `scripts/fetch-audio.py` and checked by SHA-256, because they have no stated license.
+
+---
+
 # Taking over Android photo frames
 
 Turn a cheap Android photo frame into a family dashboard: unlock it, root it, replace the vendor app, and run your own web page full screen.
