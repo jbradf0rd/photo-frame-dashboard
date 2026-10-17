@@ -4,6 +4,17 @@ This fork adds a Muslim family dashboard to Wes Bos's photo-frame project and re
 set up one AiMOR frame without an SD card. Our work is in the [`family-frame/`](family-frame/)
 folder. Everything below the line is Wes's original README, unchanged.
 
+## Cost and time
+
+The frame cost about $50 on Amazon. For comparison, the Masjidal Athan Clock costs $174.99
+for the 8 inch model and $194.99 for the 10 inch model, on mymasjidal.com on
+16 October 2026.
+
+Root access and a full verified backup were done about 40 minutes
+after we started. The first version of the family dashboard was running on the frame about
+2 hours after we started. The Adhan choices, the calendar views and the Hermes messaging came
+later the same day.
+
 ## The frame
 
 The frame is an AiMOR PF1007L, 10.1 inch, with an Allwinner A33 chip and Android 6.0.1.
