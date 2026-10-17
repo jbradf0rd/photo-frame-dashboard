@@ -1,0 +1,9 @@
+node_modules/
+dist/
+server/data/
+web/public/audio/*.mp3
+.env
+server/.env
+server/google_token.json
+*.log
+__pycache__/

@@ -1,0 +1,22 @@
+services:
+  family-frame:
+    image: python:3.12-alpine
+    container_name: family-frame
+    restart: unless-stopped
+    working_dir: /app
+    command: ["python", "-u", "/app/server/server.py"]
+    ports:
+      - "8098:8098"
+    env_file: .env
+    environment:
+      WEB_ROOT: /app/web
+      DATA_DIR: /app/data
+      TZ: ${TZ_NAME:-UTC}
+      TZ_NAME: ${TZ_NAME:-UTC}
+      LAT: ${LAT:?set LAT in .env}
+      LON: ${LON:?set LON in .env}
+      PORT: "8098"
+    volumes:
+      - ./server:/app/server:ro
+      - ./web:/app/web:ro
+      - ./data:/app/data

@@ -1,0 +1,90 @@
+/* Salah view, prayer card on Today, #alert and Adhan takeovers, message strip. */
+.salah { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; height: 100%; }
+.sl-left, .sl-right { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.sl-hijri { font-size: 54px; line-height: 1; }
+.sl-hijri i { opacity: .55; font-size: 40px; }
+.sl-civil { font-size: 20px; margin-top: 6px; opacity: .75; }
+.sl-next { display: flex; align-items: baseline; gap: 14px; margin-top: 10px; }
+.sl-next b { font-size: 34px; }
+.sl-next .num { font-size: 20px; opacity: .8; }
+.sl-times { padding: 10px 22px; flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
+.sl-row { display: grid; grid-template-columns: 1fr auto 150px; align-items: center; padding: 6px 12px; border-radius: 14px; }
+.sl-name { font-size: 30px; font-weight: 700; }
+.sl-time { font-size: 34px; font-weight: 700; }
+.sl-time small { font-size: 16px; margin-left: 4px; opacity: .6; }
+.sl-in { text-align: right; font-size: 18px; font-weight: 700; }
+.sl-row.is-minor .sl-name, .sl-row.is-minor .sl-time { font-size: 22px; opacity: .55; font-weight: 500; }
+.sl-row.is-past { opacity: .45; }
+.sl-row.is-next { background: #111; color: #fff; opacity: 1; }
+.sl-upcoming, .sl-quran { padding: 18px 22px; }
+.sl-upcoming { flex: 1.1; overflow: hidden; }
+.sl-up { display: flex; flex-direction: column; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,.08); }
+.sl-up b { font-size: 21px; }
+.sl-up span { font-size: 16px; opacity: .65; }
+.sl-up.is-big b { color: #0B7A55; }
+.sl-q { display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 6px; text-align: left; border-radius: 14px; }
+.sl-q span:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
+.sl-q b { font-size: 22px; }
+.sl-q small { font-size: 16px; opacity: .65; }
+.sl-q-n { font-size: 30px; font-weight: 800; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
+.sl-q-n small { font-size: 12px; font-weight: 600; opacity: .6; }
+.sl-input { width: 100%; font-size: 28px; padding: 14px 16px; border-radius: 14px; border: 2px solid rgba(0,0,0,.15); margin: 16px 0; }
+.sl-sheet-actions { display: flex; gap: 12px; }
+.sl-sheet-actions .btn { font-size: 20px; padding: 14px 22px; border-radius: 14px; border: 2px solid #111; font-weight: 700; }
+.sl-sheet-actions .btn--solid { background: #111; color: #fff; }
+
+/* Today: prayer card replaces the photo */
+.h-prayer { display: flex; flex-direction: column; justify-content: space-between; padding: 18px 22px; background: #0F2A22; color: #fff; text-align: left; border-radius: 22px; }
+.h-prayer .label { color: rgba(255,255,255,.7); }
+.h-pr-next { display: flex; align-items: baseline; justify-content: space-between; }
+.h-pr-next b { font-size: 40px; }
+.h-pr-next span { font-size: 22px; font-weight: 700; }
+.h-pr-list { display: flex; justify-content: space-between; font-size: 15px; }
+.h-pr-list span { display: flex; flex-direction: column; align-items: center; opacity: .7; }
+.h-pr-list span.is-next { opacity: 1; font-weight: 800; }
+.h-pr-list b { font-size: 18px; }
+.h-hijri { font-size: 17px; opacity: .85; }
+
+/* Message strip on Today (replaces presence) */
+.h-msgs { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.h-msg { display: flex; gap: 10px; align-items: center; background: #FFF4D6; border-radius: 14px; padding: 8px 14px; font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.h-msg small { font-weight: 500; opacity: .6; }
+.h-msg-empty { opacity: .5; font-size: 17px; }
+
+/* Takeovers */
+.takeover--adhan { background: #0F2A22; color: #fff; }
+.takeover--alert { background: #B3261E; color: #fff; }
+.tk-alert-text { font-size: 76px; line-height: 1.08; font-weight: 900; max-width: 1050px; margin: 24px auto 34px; word-wrap: break-word; }
+
+/* Screensaver without photos */
+.amb-stage.amb-plain { background: radial-gradient(circle at 30% 20%, #1F4D3E 0%, #0B1F19 70%); }
+.amb-prayer { font-size: 26px; font-weight: 700; display: flex; gap: 10px; align-items: baseline; }
+.amb-prayer small { font-weight: 500; opacity: .75; }
+
+/* Hijri day numbers in the calendar */
+.hj { display: block; font-size: 12px; font-weight: 600; opacity: .55; }
+.hj-big { color: #0B7A55; opacity: 1; font-weight: 800; }
+
+/* spacing fixes for the Today prayer card (measured on the frame 2026-10-15) */
+.h-photo.h-prayer { display: flex !important; flex-direction: column; justify-content: space-between; gap: 10px; padding: 22px 24px; }
+.h-pr-next { gap: 16px; flex-wrap: wrap; }
+.h-pr-next b { font-size: 46px; line-height: 1; }
+.h-pr-next span { font-size: 26px; }
+.h-pr-list { gap: 8px; }
+.h-pr-list span { flex: 1; gap: 4px; font-size: 16px; }
+.h-pr-list b { font-size: 20px; }
+
+/* Parent panel: Adhan volume */
+.vol-row { display: grid; grid-template-columns: 1fr 64px 90px 64px; align-items: center; gap: 10px; margin: 8px 0; }
+.vol-name { font-size: 20px; font-weight: 700; }
+.vol-btn { font-size: 34px; font-weight: 800; height: 56px; border-radius: 14px; }
+.vol-val { font-size: 24px; text-align: center; }
+
+/* Today, top right: Hijri date across the full column, alerts listed under it */
+.h-presence { justify-content: flex-start !important; }
+.h-msgs { flex-direction: column; align-items: stretch; gap: 8px; width: 100%; }
+.h-hijri { width: 100%; white-space: nowrap; font-size: 22px; padding-bottom: 6px; border-bottom: 1px solid rgba(0,0,0,.12); opacity: 1; }
+.h-hijri b { font-weight: 800; }
+.h-msg { width: 100%; max-width: none; font-size: 17px; padding: 6px 12px; }
+.h-msg small { margin-left: auto; }
+.h-msg-empty { font-size: 16px; }
